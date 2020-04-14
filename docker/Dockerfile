@@ -1,4 +1,4 @@
-FROM postgres:9.6.17
+FROM postgres:9.5.10
 
 RUN apt-get update
 
