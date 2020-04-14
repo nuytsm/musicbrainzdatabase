@@ -20,23 +20,24 @@ psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -f CreateTables.sql
 rm CreateTables.sql
 
 echo "Downloading last Musicbrainz dump"
-wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/sample/LATEST
+#wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/sample/LATEST
+wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/LATEST
 LATEST="$(cat /tmp/LATEST)"
 
 #Sample database dump (smaller than the full db dump (3gb vs 10gb)
-wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/sample/$LATEST/mbdump-sample.tar.xz
+#wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/sample/$LATEST/mbdump-sample.tar.xz
 
 #Full database dump
-#wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/sample/$LATEST/mbdump.tar.bz2
+wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/$LATEST/mbdump.tar.bz2
 
 
 echo "Uncompressing Musicbrainz dump"
 #uncompress sample dump
-tar xf /tmp/mbdump-sample.tar.xz
+#tar xf /tmp/mbdump-sample.tar.xz
 #rm mbdump-sample.tar.xz
 
 #uncompress full dump
-#tar xjf /tmp/mbdump.tar.bz2
+tar xjf /tmp/mbdump.tar.bz2
 #rm mbdump.tar.bz2
 
 for f in mbdump/*
