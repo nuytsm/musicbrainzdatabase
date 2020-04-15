@@ -1,6 +1,7 @@
 #!/bin/bash
 
-cd /tmp
+#cd /tmp
+cd /var/lib/postgresql
 
 echo "Creating Musicbrainz database structure"
 
@@ -8,45 +9,47 @@ echo "postgresql:5432:musicbrainz:$POSTGRES_USER:$POSTGRES_PASSWORD"  > ~/.pgpas
 chmod 0600 ~/.pgpass
 
 echo "Creating extensions"
+psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c "CREATE SCHEMA musicbrainz;"
 psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c "CREATE EXTENSION IF NOT EXISTS cube;"
 psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c "CREATE EXTENSION IF NOT EXISTS earthdistance;"
-psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c "CREATE SCHEMA musicbrainz;"
-psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c "CREATE EXTENSION IF NOT EXISTS musicbrainz_unaccent WITH SCHEMA musicbrainz;"
-psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c "CREATE EXTENSION IF NOT EXISTS musicbrainz_collate WITH SCHEMA musicbrainz;"
-psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c "COMMIT";
+
+wget https://raw.githubusercontent.com/metabrainz/musicbrainz-server/master/admin/sql/Extensions.sql
+psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -f Extensions.sql
+rm Extensions.sql
 
 wget https://raw.githubusercontent.com/metabrainz/musicbrainz-server/master/admin/sql/CreateTables.sql
 psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -f CreateTables.sql
 rm CreateTables.sql
 
 echo "Downloading last Musicbrainz dump"
-#wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/sample/LATEST
-wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/LATEST
-LATEST="$(cat /tmp/LATEST)"
+wget -nd -nH -P /var/lib/postgresql http://ftp.musicbrainz.org/pub/musicbrainz/data/sample/LATEST
+#wget -N -nd -nH -P /var/lib/postgresql http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/LATEST
+LATEST="$(cat /var/lib/postgresql/LATEST)"
+rm -rf /var/lib/postgresql/LATEST
 
 #Sample database dump (smaller than the full db dump (3gb vs 10gb)
-#wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/sample/$LATEST/mbdump-sample.tar.xz
+wget --N nd -nH -P /var/lib/postgresql http://ftp.musicbrainz.org/pub/musicbrainz/data/sample/$LATEST/mbdump-sample.tar.xz
 
 #Full database dump
-wget -nd -nH -P /tmp http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/$LATEST/mbdump.tar.bz2
+#wget -N -nd -nH -P /var/lib/postgresql http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/$LATEST/mbdump.tar.bz2
 
 
-echo "Uncompressing Musicbrainz dump"
+echo "Uncompressing Musicbrainz dump, this can take a while.."
 #uncompress sample dump
-#tar xf /tmp/mbdump-sample.tar.xz
+tar xf /var/lib/postgresql/mbdump-sample.tar.xz
 #rm mbdump-sample.tar.xz
 
 #uncompress full dump
-tar xjf /tmp/mbdump.tar.bz2
+#tar vxjf /var/lib/postgresql/mbdump.tar.bz2
 #rm mbdump.tar.bz2
 
 for f in mbdump/*
 do
  tablename="${f:7}"
  echo "Importing $tablename table"
- echo "psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c COPY $tablename FROM '/tmp/$f'"
- chmod a+rX /tmp/$f
- psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c "\COPY $tablename FROM '/tmp/$f'"
+ echo "psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c COPY $tablename FROM '/var/lib/postgresql/$f'"
+ chmod a+rX /var/lib/postgresql/$f
+ psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -c "\COPY $tablename FROM '/var/lib/postgresql/$f'"
 done
 
 rm -rf mbdump
