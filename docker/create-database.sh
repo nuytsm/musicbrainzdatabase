@@ -65,3 +65,10 @@ psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -f CreateIndexes.sql
 rm CreateIndexes.sql
 
 echo "create-database.sh script finished, database should be filled with data"
+
+echo "Creating view on the database that contains artitst and their albums"
+wget https://raw.githubusercontent.com/nuytsm/musicbrainzdatabase/master/sql-scripts/createArtistAlbumview.sql
+psql -h postgresql -d musicbrainz -U $POSTGRES_USER -a -f createArtistAlbumview.sql
+rm createArtistAlbumview.sql
+
+echo "Script done"
